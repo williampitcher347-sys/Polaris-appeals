@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POLARIS // Secure Ban Appeals Portal</title>
+
+  <!-- Firebase v9 Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <style>
+    :root {
+      --bg-core: #000000;
+      --bg-surface: #080808;
+      --bg-input: #030303;
+      --text-main: #f3f4f6;
+      --text-muted: #737373;
+      --border-subtle: rgba(255, 255, 255, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; user-select: none; }
+    body { background-color: var(--bg-core); color: var(--text-main); height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+
+    /* AMBIENT BACKGROUND GLOW */
+    .bg-ambient-glow {
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+      animation: pulseGlow 8s infinite alternate ease-in-out;
+    }
+    @keyframes pulseGlow { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.12); opacity: 1; } }
+
+    .portal-card {
+      background: var(--bg-surface); width: 440px; padding: 40px; border-radius: 4px;
+      border: 1px solid var(--border-subtle); box-shadow: 0 0 50px rgba(0,0,0,0.9);
+      display: flex; flex-direction: column; gap: 20px; text-align: center; position: relative; z-index: 1;
+      animation: portalPopup 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+    }
+    @keyframes portalPopup { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    .portal-card h1 { font-size: 18px; font-weight: 800; letter-spacing: 3px; color: #fff; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.4); }
+    .portal-card p { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+    .form-group label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
+
+    input[type="text"], textarea {
+      background: var(--bg-input); border: 1px solid var(--border-subtle); padding: 12px;
+      border-radius: 2px; color: #fff; outline: none; font-size: 12px; width: 100%; transition: all 0.2s;
+    }
+    input:focus, textarea:focus { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.15); }
+
+    .btn-submit {
+      background: #fff; color: #000; border: none; padding: 13px; border-radius: 2px;
+      font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-size: 11px;
+      transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+    .btn-submit:hover { opacity: 0.85; box-shadow: 0 0 15px rgba(255,255,255,0.4); transform: translateY(-1px); }
+
+    #status-banner {
+      display: none; padding: 12px; background: #121212; border: 1px solid var(--border-subtle);
+      border-radius: 2px; font-size: 11px; color: #fff; animation: slideBanner 0.3s ease forwards;
+    }
+    @keyframes slideBanner { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+
+  <!-- AMBIENT GLOW -->
+  <div class="bg-ambient-glow"></div>
+
+  <div class="portal-card">
+    <h1>Account Suspension Appeal</h1>
+    <p>If your account has been restricted from the network, submit your statement below for administrative review by <strong>THE EYE</strong>.</p>
+
+    <div id="status-banner"></div>
+
+    <div class="form-group">
+      <label>Your Exact Username</label>
+      <input type="text" id="appeal-username" placeholder="e.g. williampitcher">
+    </div>
+
+    <div class="form-group">
+      <label>Appeal Statement & Explanation</label>
+      <textarea id="appeal-message" placeholder="Provide context regarding your suspension..." style="height: 100px; resize: none;"></textarea>
+    </div>
+
+    <button class="btn-submit" onclick="submitAppeal()">Transmit Appeal Ticket</button>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAiAKJfmtdX61DzyWnCTViMkIbo08vAAUY",
+      authDomain: "dscrd-v1.firebaseapp.com",
+      databaseURL: "https://dscrd-v1-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "dscrd-v1",
+      storageBucket: "dscrd-v1.firebasestorage.app",
+      messagingSenderId: "328534181368",
+      appId: "1:328534181368:web:5b65d84358b4c2b950020d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function submitAppeal() {
+      const username = document.getElementById('appeal-username').value.trim();
+      const message = document.getElementById('appeal-message').value.trim();
+      const banner = document.getElementById('status-banner');
+
+      if (!username || !message) {
+        alert("Please provide both your username and appeal statement.");
+        return;
+      }
+
+      db.ref('users').once('value').then(snap => {
+        let foundUserId = null;
+        let isUserBanned = false;
+
+        snap.forEach(c => {
+          const u = c.val();
+          if (u.name && u.name.toLowerCase() === username.toLowerCase()) {
+            foundUserId = c.key;
+            isUserBanned = u.isBanned;
+          }
+        });
+
+        if (!foundUserId) {
+          banner.style.display = 'block';
+          banner.style.borderColor = '#ef4444';
+          banner.innerText = "Error: Username not found in network registry.";
+          return;
+        }
+
+        if (!isUserBanned) {
+          banner.style.display = 'block';
+          banner.style.borderColor = '#f59e0b';
+          banner.innerText = "Notice: This account is not currently under suspension.";
+          return;
+        }
+
+        db.ref('ban_appeals').push().set({
+          userId: foundUserId,
+          username: username,
+          message: message,
+          timestamp: Date.now()
+        });
+
+        banner.style.display = 'block';
+        banner.style.borderColor = '#fff';
+        banner.innerText = "Appeal successfully transmitted to THE EYE. Awaiting supervisor review.";
+        
+        document.getElementById('appeal-message').value = '';
+      });
+    }
+  </script>
+</body>
+</html>
