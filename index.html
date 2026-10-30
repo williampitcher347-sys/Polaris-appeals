@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POLARIS // Secure Ban Appeals Portal</title>
+  <title>POLARIS // Secure Node Interface</title>
 
   <!-- Firebase v9 Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -11,81 +11,113 @@
 
   <style>
     :root {
-      --bg-core: #000000;
-      --bg-surface: #080808;
-      --bg-input: #030303;
-      --text-main: #f3f4f6;
-      --text-muted: #737373;
-      --border-subtle: rgba(255, 255, 255, 0.15);
+      --bg-core: #000206;
+      --bg-surface: rgba(6, 11, 25, 0.75);
+      --bg-card: rgba(10, 18, 38, 0.6);
+      --bg-input: rgba(2, 5, 12, 0.85);
+      --brand-cyan: #38bdf8;
+      --brand-glow: rgba(56, 189, 248, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #64748b;
+      --border-accent: rgba(56, 189, 248, 0.25);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --status-success: #10b981;
+      --status-danger: #ef4444;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; user-select: none; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; user-select: none; }
     body { background-color: var(--bg-core); color: var(--text-main); height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
 
-    /* AMBIENT BACKGROUND GLOW */
-    .bg-ambient-glow {
+    /* ULTRA-CINEMATIC SMOOTH GRADIENT AMBIENCE (ABSOLUTELY ZERO AUDIO / NOISE / GATE) */
+    .cinematic-glow {
       position: absolute; inset: 0; pointer-events: none; z-index: 0;
-      background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
-      animation: pulseGlow 8s infinite alternate ease-in-out;
+      background: radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 0.09) 0%, rgba(6, 11, 25, 0.8) 55%, var(--bg-core) 100%);
+      animation: cinematicPulse 14s infinite alternate ease-in-out;
     }
-    @keyframes pulseGlow { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.12); opacity: 1; } }
+    @keyframes cinematicPulse { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 1; transform: scale(1.1); } }
 
+    /* CINEMATIC PORTAL CARD UI */
     .portal-card {
-      background: var(--bg-surface); width: 440px; padding: 40px; border-radius: 4px;
-      border: 1px solid var(--border-subtle); box-shadow: 0 0 50px rgba(0,0,0,0.9);
-      display: flex; flex-direction: column; gap: 20px; text-align: center; position: relative; z-index: 1;
-      animation: portalPopup 0.5s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+      background: var(--bg-surface); width: 460px; padding: 42px; border-radius: 20px;
+      border: 1px solid var(--border-accent); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(56, 189, 248, 0.12);
+      display: flex; flex-direction: column; gap: 20px; position: relative; z-index: 1; backdrop-filter: blur(24px);
+      animation: popupPortal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    @keyframes portalPopup { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes popupPortal { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    .portal-card h1 { font-size: 18px; font-weight: 800; letter-spacing: 3px; color: #fff; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.4); }
-    .portal-card p { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+    .brand-header { display: flex; flex-direction: column; gap: 6px; text-align: left; border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; }
+    .brand-code { font-size: 11px; font-weight: 700; color: var(--brand-cyan); letter-spacing: 1.5px; text-transform: uppercase; }
+    .brand-title { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 0.5px; }
+    .brand-subtitle { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 
     .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
     .form-group label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
 
     input[type="text"], textarea {
-      background: var(--bg-input); border: 1px solid var(--border-subtle); padding: 12px;
-      border-radius: 2px; color: #fff; outline: none; font-size: 12px; width: 100%; transition: all 0.2s;
+      background: var(--bg-input); border: 1px solid var(--border-subtle); padding: 14px 16px;
+      border-radius: 10px; color: #fff; outline: none; font-size: 13px; width: 100%; transition: all 0.25s ease;
     }
-    input:focus, textarea:focus { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.15); }
+    input:focus, textarea:focus { border-color: var(--brand-cyan); box-shadow: 0 0 20px var(--brand-glow); }
 
     .btn-submit {
-      background: #fff; color: #000; border: none; padding: 13px; border-radius: 2px;
-      font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-size: 11px;
-      transition: all 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+      background: linear-gradient(135deg, #2563eb, var(--brand-cyan)); color: #fff; border: none; padding: 15px;
+      border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px;
+      transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .btn-submit:hover { opacity: 0.85; box-shadow: 0 0 15px rgba(255,255,255,0.4); transform: translateY(-1px); }
+    .btn-submit:hover { box-shadow: 0 0 25px var(--brand-glow); transform: translateY(-2px); }
 
-    #status-banner {
-      display: none; padding: 12px; background: #121212; border: 1px solid var(--border-subtle);
-      border-radius: 2px; font-size: 11px; color: #fff; animation: slideBanner 0.3s ease forwards;
+    /* LIVE TRACKER UI */
+    #tracker-box {
+      display: none; background: var(--bg-card); border: 1px solid var(--border-accent);
+      border-radius: 12px; padding: 18px; flex-direction: column; gap: 12px; text-align: left;
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    @keyframes slideBanner { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .tracker-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; }
+    .tracker-time { font-size: 10px; color: var(--text-muted); font-weight: 400; }
+    .tracker-msg { font-size: 12px; color: #cbd5e1; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 8px; border: 1px solid var(--border-subtle); }
+    .btn-resend { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border-subtle); padding: 9px 14px; border-radius: 8px; font-weight: 700; font-size: 10px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
+    .btn-resend:hover { background: var(--border-accent); border-color: var(--brand-cyan); transform: translateY(-1px); }
   </style>
 </head>
 <body>
 
-  <!-- AMBIENT GLOW -->
-  <div class="bg-ambient-glow"></div>
+  <div class="cinematic-glow"></div>
 
   <div class="portal-card">
-    <h1>Account Suspension Appeal</h1>
-    <p>If your account has been restricted from the network, submit your statement below for administrative review by <strong>THE POLARIS STAFF</strong>.</p>
-
-    <div id="status-banner"></div>
-
-    <div class="form-group">
-      <label>Your Exact Username</label>
-      <input type="text" id="appeal-username" placeholder="e.g. williampitcher">
+    <div class="brand-header">
+      <div class="brand-code">🛡️ POLARIS STAFF TEAM</div>
+      <div class="brand-title">Account Appeals Portal</div>
+      <div class="brand-subtitle">If your access has been restricted, submit an official statement below for evaluation by the Polaris Staff Team.</div>
     </div>
 
-    <div class="form-group">
-      <label>Appeal Statement & Explanation</label>
-      <textarea id="appeal-message" placeholder="Provide context regarding your suspension..." style="height: 100px; resize: none;"></textarea>
+    <!-- LIVE STATUS TRACKER -->
+    <div id="tracker-box">
+      <div class="tracker-header">
+        <span id="tracker-status-tag" style="color: var(--brand-cyan);">● APPEAL UNDER REVIEW</span>
+        <span class="tracker-time" id="tracker-elapsed-time">Sent 0m ago</span>
+      </div>
+      <div class="tracker-msg" id="tracker-message-text"></div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+        <button class="btn-resend" onclick="resetFormForResend()">Submit New Appeal</button>
+      </div>
     </div>
 
-    <button class="btn-submit" onclick="submitAppeal()">Send Appeal Ticket</button>
+    <!-- APPEAL FORM -->
+    <form id="appeal-form" onsubmit="event.preventDefault(); submitAppeal();" style="display: flex; flex-direction: column; gap: 18px;">
+      <div class="form-group">
+        <label>Account Identifier (Username)</label>
+        <input type="text" id="appeal-username" placeholder="Enter username..." required>
+      </div>
+
+      <div class="form-group">
+        <label>Appeal Statement</label>
+        <textarea id="appeal-message" placeholder="Provide context regarding your account restriction..." style="height: 110px; resize: none;" required></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit">Transmit Appeal</button>
+    </form>
   </div>
 
   <script>
@@ -102,15 +134,16 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    let currentAppealKey = null;
+    let appealTimestamp = null;
+    let timerInterval = null;
+
+    // SUBMIT APPEAL TO POLARIS QUEUE
     function submitAppeal() {
       const username = document.getElementById('appeal-username').value.trim();
       const message = document.getElementById('appeal-message').value.trim();
-      const banner = document.getElementById('status-banner');
 
-      if (!username || !message) {
-        alert("Please provide both your username and appeal statement.");
-        return;
-      }
+      if (!username || !message) return;
 
       db.ref('users').once('value').then(snap => {
         let foundUserId = null;
@@ -125,32 +158,75 @@
         });
 
         if (!foundUserId) {
-          banner.style.display = 'block';
-          banner.style.borderColor = '#ef4444';
-          banner.innerText = "Error: Username not found in network registry.";
+          alert("Error: Username not found in network registry.");
           return;
         }
 
         if (!isUserBanned) {
-          banner.style.display = 'block';
-          banner.style.borderColor = '#f59e0b';
-          banner.innerText = "Notice: This account is not currently under suspension.";
+          alert("Notice: This account is not currently restricted.");
           return;
         }
 
-        db.ref('ban_appeals').push().set({
+        const now = Date.now();
+        const ref = db.ref('ban_appeals').push();
+        currentAppealKey = ref.key;
+        appealTimestamp = now;
+
+        ref.set({
           userId: foundUserId,
           username: username,
           message: message,
-          timestamp: Date.now()
+          timestamp: now
+        }).then(() => {
+          startLiveTracking(foundUserId, username, message);
         });
-
-        banner.style.display = 'block';
-        banner.style.borderColor = '#fff';
-        banner.innerText = "Appeal successfully transmitted to Polaris staff. Awaiting supervisor review.";
-        
-        document.getElementById('appeal-message').value = '';
       });
+    }
+
+    // REAL-TIME STATUS TRACKER
+    function startLiveTracking(uid, username, message) {
+      document.getElementById('appeal-form').style.display = 'none';
+      const tracker = document.getElementById('tracker-box');
+      tracker.style.display = 'flex';
+      document.getElementById('tracker-message-text').innerText = `"${message}"`;
+
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        const elapsedMins = Math.floor((Date.now() - appealTimestamp) / 60000);
+        document.getElementById('tracker-elapsed-time').innerText = `Sent ${elapsedMins === 0 ? 'just now' : elapsedMins + 'm ago'}`;
+      }, 5000);
+
+      db.ref(`users/${uid}/isBanned`).on('value', snap => {
+        const isBanned = snap.val();
+        const statusTag = document.getElementById('tracker-status-tag');
+
+        if (isBanned === false) {
+          statusTag.style.color = "var(--status-success)";
+          statusTag.innerText = "✔ APPEAL APPROVED // ACCESS RESTORED";
+          alert("Your appeal was approved by the Polaris Staff Team. Access restored.");
+        }
+      });
+
+      db.ref(`ban_appeals/${currentAppealKey}`).on('value', snap => {
+        if (!snap.exists()) {
+          db.ref(`users/${uid}/isBanned`).once('value', uSnap => {
+            if (uSnap.val() === true) {
+              const statusTag = document.getElementById('tracker-status-tag');
+              statusTag.style.color = "var(--status-danger)";
+              statusTag.innerText = "✖ APPEAL REVIEWED // CLOSED";
+            }
+          });
+        }
+      });
+    }
+
+    function resetFormForResend() {
+      if (confirm("Reset tracking view and prepare a new appeal submission?")) {
+        if (timerInterval) clearInterval(timerInterval);
+        document.getElementById('tracker-box').style.display = 'none';
+        document.getElementById('appeal-form').style.display = 'flex';
+        document.getElementById('appeal-message').value = '';
+      }
     }
   </script>
 </body>
